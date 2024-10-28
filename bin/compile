@@ -23,7 +23,7 @@ if [ "$git_ssh_key" != "" ]; then
   cat ~/.ssh/id_rsa
   chmod 600 ~/.ssh/id_rsa
 
-  docker ls
+  docker --help | echo
   
   GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone -b "$addon_plan" "$git_clone" "$BUILD_DIR/app"
   
