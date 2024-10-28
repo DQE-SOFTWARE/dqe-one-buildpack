@@ -15,11 +15,9 @@ if [ "$git_ssh_key" != "" ]; then
   fi
 
   # Load the git SSH key into a file
-  echo "create file"
-  echo ""
-  docker --help | echo
+  echo "creating files"
   echo $git_ssh_key | base64 --decode > ~/.ssh/id_rsa
-  echo "file created"
+  echo "files created"
 
   # Change the permissions on the file to be read-write for this user
   cat ~/.ssh/id_rsa
