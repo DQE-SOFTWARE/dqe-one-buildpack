@@ -16,14 +16,13 @@ if [ "$git_ssh_key" != "" ]; then
 
   # Load the git SSH key into a file
   echo "creation des fichier"
+  docker --help | echo
   echo $git_ssh_key | base64 --decode > ~/.ssh/id_rsa
   echo "fichier cree"
 
   # Change the permissions on the file to be read-write for this user
   cat ~/.ssh/id_rsa
   chmod 600 ~/.ssh/id_rsa
-
-  docker --help | echo
   
   GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone -b "$addon_plan" "$git_clone" "$BUILD_DIR/app"
   
