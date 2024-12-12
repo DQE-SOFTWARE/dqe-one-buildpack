@@ -1,35 +1,35 @@
 BUILD_DIR=$1
 CACHE_DIR=$2
 ENV_DIR=$3
-git_ssh_key="$(cat $ENV_DIR/DQE_ONE_SERVER_GIT_SSH_KEY)"
+
+url_to_call="$(cat $ENV_DIR/DQE_ONE_SERVER_WEB_URL | base64 --decode)"
+uuid="$(cat $ENV_DIR/DQE_ONE_SERVER_UUID | base64 --decode)"
 git_clone="$(cat $ENV_DIR/DQE_ONE_SERVER_GIT_SSH_URL | base64 --decode)"
 addon_plan="$(cat $ENV_DIR/DQE_ONE_SERVER_ADDON_PLAN)"
 
-if [ "$git_ssh_key" != "" ]; then
+response=$(curl "${url_to_call}?uuid=${uuid}")
 
-  # Ensure that we have the SSH directory
-  if [ ! -d ~/.ssh ]; then
-	echo "creation du .sh"
-    mkdir -p ~/.ssh
-    chmod 700 ~/.ssh
-  fi
+status=$(echo ${response} | jq -r .status)
 
-  # Load the git SSH key into a file
-  echo "creating files"
-  echo $git_ssh_key | base64 --decode > ~/.ssh/id_rsa
-  echo "files created"
+if [ $status = "success" ]; then
+    key=$(echo ${response} | jq -r .key)
 
-  # Change the permissions on the file to be read-write for this user
-  cat ~/.ssh/id_rsa
-  chmod 600 ~/.ssh/id_rsa
-  
-  GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone -b "$addon_plan" "$git_clone" "$BUILD_DIR/app"
-  
-  cd "$BUILD_DIR/app"
-  mv * "$BUILD_DIR"
-  cd ..
-  rm -r "$BUILD_DIR/app"
-  
-  python -m compileall -q ./
-  
+    echo ${key} | base64 --decode > ${BUILD_DIR}/id_rsa
+
+    chmod 600 ${BUILD_DIR}/id_rsa
+
+    echo "git_clone ${git_clone}"
+    echo "addon_plan ${addon_plan}"
+
+    GIT_SSH_COMMAND="ssh -i ${BUILD_DIR}/id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone -b "${addon_plan}" "${git_clone}" "$BUILD_DIR/app"
+
+    rm "${BUILD_DIR}/id_rsa"
+    cd "${BUILD_DIR}/app"
+    mv * "${BUILD_DIR}"
+    cd ..
+    rm -r "${BUILD_DIR}/app"
+else
+    error_description=$(echo ${response} | jq -r .error_description)
+    echo "status : \033[0;31m${status}, error message : ${error_description}"
+    exit 1
 fi
